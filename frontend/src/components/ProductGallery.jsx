@@ -1,6 +1,4 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-// eslint-disable-next-line no-unused-vars
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaHeart, FaRegHeart, FaShoppingCart } from "react-icons/fa"; // Import the cart icon
@@ -8,7 +6,6 @@ import { FaHeart, FaRegHeart, FaShoppingCart } from "react-icons/fa"; // Import 
 function ProductGallery() {
   const [products, setProducts] = useState([]);
   const [currentImageIndices, setCurrentImageIndices] = useState({});
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // User login state
   const [cart, setCart] = useState([]); // To store multiple products in the cart
   const [likedProducts, setLikedProducts] = useState([]); // To track liked products
   const navigate = useNavigate();
@@ -33,89 +30,28 @@ function ProductGallery() {
   }
 
   useEffect(() => {
-    console.log("Fetching products...");
     getAllProducts();
   }, []);
 
-  // Handle Add to Cart or Go to Cart action
-  async function handleAddToCart(productId) {
-    const token = localStorage.getItem('Token'); // Retrieve token from localStorage
-    if (!token) {
-      alert('Please log in to add items to your cart.');
-      return;
-    }
-
-    const cartUpdate = {
-      cart: {
-        [productId]: 1, // Set quantity to 1 for simplicity
-      },
-    };
-
-    try {
-      const response = await fetch('http://localhost:5000/api/v1/cart/update', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Include the token in the request
-        },
-        body: JSON.stringify(cartUpdate),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        alert('Product added to cart successfully!');
-        console.log('Updated Cart:', result.data);
+  // Handle Add to Cart
+  const handleAddToCart = (product) => {
+    setCart((prevCart) => {
+      // Check if product already exists in the cart
+      const existingProductIndex = prevCart.findIndex((item) => item._id === product._id);
+      if (existingProductIndex !== -1) {
+        // If exists, increase the quantity (assuming each product has a quantity property)
+        const updatedCart = [...prevCart];
+        updatedCart[existingProductIndex].quantity += 1;
+        return updatedCart;
       } else {
-        alert(result.message || 'Failed to add product to cart.');
-        console.error(result.errors);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred while adding the product to the cart.');
-    }
-  }
-
-  
-  // Change product images
-  const showNextImage = (productId) => {
-    setCurrentImageIndices((prevIndices) => ({
-      ...prevIndices,
-      [productId]: (prevIndices[productId] + 1) % products.find(p => p._id === productId).pictures.length,
-    }));
-  };
-
-  const showPrevImage = (productId) => {
-    setCurrentImageIndices((prevIndices) => {
-      const product = products.find(p => p._id === productId);
-      const newIndex =
-        (prevIndices[productId] - 1 + product.pictures.length) % product.pictures.length;
-      return {
-        ...prevIndices,
-        [productId]: newIndex,
-      };
-    });
-  };
-
-  // Handle Like button click
-  const handleLikeClick = (productId) => {
-    setLikedProducts((prevLikedProducts) => {
-      if (prevLikedProducts.includes(productId)) {
-        return prevLikedProducts.filter(id => id !== productId); // Remove from liked products
-      } else {
-        return [...prevLikedProducts, productId]; // Add to liked products
+        // If not, add the product to the cart
+        return [...prevCart, { ...product, quantity: 1 }];
       }
     });
+    setCartCount(cartCount + 1); // Update the cart count
   };
 
-  const navigateToFavorites = () => {
-    // Find the liked products by matching the product ids
-    const likedProductDetails = products.filter(product =>
-      likedProducts.includes(product._id)
-    );
-
-    navigate("/favorites", { state: { likedProducts: likedProductDetails, likedProductIds: likedProducts } });
-  };
-
+  // Navigate to cart
   const navigateToCart = () => {
     navigate("/cart", { state: { cart } });
   };
@@ -173,20 +109,12 @@ function ProductGallery() {
                 <p className="text-sm text-gray-600 mt-4"><i>Category: {product.category}</i></p>
                 <p className="text-start mt-4">{product.description}</p>
 
-                {/* Conditional button based on login state */}
+                {/* Add to Cart Button */}
                 <button
-                  className={`text-white px-4 py-2 rounded-[20px] mt-2 ${isLoggedIn ? 'bg-[#8c063b]' : 'bg-[#8c063b]'}`}
-                  onClick={() => handleButtonClick(product)} 
+                  className="text-white px-4 py-2 rounded-[20px] mt-2 bg-[#8c063b]"
+                  onClick={() => handleAddToCart(product)} 
                 >
-                  {isLoggedIn ? "Add to Cart" : "Add to Cart"}
-                </button>
-
-                {/* Favorite Button */}
-                <button
-                  className="text-white px-4 py-2 rounded-[20px] mt-2 bg-[#ce807e]"
-                  onClick={navigateToFavorites}
-                >
-                  Go to Favorites
+                  Add to Cart
                 </button>
               </div>
             </div>
@@ -195,15 +123,15 @@ function ProductGallery() {
       </div>
 
       {/* Cart Icon */}
-<div 
-  className="fixed bottom-4 right-4 bg-[#ce807e] rounded-full p-4 shadow-lg cursor-pointer z-50"
-  onClick={navigateToCart}
->
-  <FaShoppingCart className="text-white text-2xl" />
-  {cartCount > 0 && (
-    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-2 py-1">
-      {cartCount}
-    </span>
+      <div
+        className="fixed bottom-4 right-4 bg-[#ce807e] rounded-full p-4 shadow-lg cursor-pointer z-50"
+        onClick={navigateToCart}
+      >
+        <FaShoppingCart className="text-white text-2xl" />
+        {cartCount > 0 && (
+          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-2 py-1">
+            {cartCount}
+          </span>
         )}
       </div>
     </div>
