@@ -133,24 +133,29 @@ router.put('/update', authenticateToken, async (req, res) => {
   
       // Find the user's cart or initialize a new one
       let cart = await Cart.findOne({ user: user_Id });
-  
-      if (!cart) {
-        cart = new Cart({ user: user_Id, items: [] });
-      }
-  
+
+        if (!cart) {
+        cart = new Cart({ user: user_Id, items: [] }); // Ensure items is initialized as an empty array
+        }
+
       // Update quantities or add new products to the cart
       Object.entries(cartItems).forEach(([productId, quantity]) => {
-        const existingItem = cart.items.find(item => item.product.toString() === productId);
-  
-        if (existingItem) {
-          // Update quantity if the product already exists
-          existingItem.quantity += Number(quantity);
+        // Check if cart.items is an array
+        if (Array.isArray(cart.items)) {
+          const existingItem = cart.items.find(item => item.product.toString() === productId);
+      
+          if (existingItem) {
+            // Update quantity if the product already exists
+            existingItem.quantity += Number(quantity);
+          } else {
+            // Add new product to the cart
+            cart.items.push({ product: productId, quantity: Number(quantity) });
+          }
         } else {
-          // Add new product to the cart
-          cart.items.push({ product: productId, quantity: Number(quantity) });
+          console.error("cart.items is not an array");
         }
       });
-  
+      
       // Recalculate total price
       await cart.save(); // pre('save') will handle the total price calculation
   
