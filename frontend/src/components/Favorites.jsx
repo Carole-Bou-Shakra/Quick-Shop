@@ -8,8 +8,10 @@ function Favorites() {
   const { likedProducts, likedProductIds } = state;
 
   const [likedProductsState, setLikedProductsState] = useState(likedProductIds);
+  // eslint-disable-next-line no-unused-vars
   const [favorites, setFavorites] = useState([]);
 
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate(); // Hook to navigate to Cart page
 
   // Toggle like status for the heart
@@ -27,11 +29,6 @@ function Favorites() {
   useEffect(() => {
     setFavorites(likedProducts.filter(product => likedProductsState.includes(product._id)));
   }, [likedProductsState, likedProducts]);
-
-  const goToCart = () => {
-    // Pass the selected favorites directly to the Cart page
-    navigate("/cart", { state: { cart: favorites } });
-  };
 
   return (
     <div
@@ -65,22 +62,12 @@ function Favorites() {
                   </button>
                 </div>
               </div>
-              <div className="card-bottom p-2 h-[50%] flex flex-col justify-between">
+              <div className="card-bottom p-2 h-[40%] flex flex-col justify-between">
                 <div className="flex justify-between">
                   <h2 className="text-xl"><b>{product.name}</b></h2>
                   <h3 className="text-xl">${product.price}</h3>
                 </div>
                 <p className="text-start mt-4">{product.description}</p>
-
-                {/* Button to navigate to Cart */}
-                <div className="mt-4 w-full flex justify-center">
-                  <button
-                    onClick={goToCart}
-                    className="px-6 py-2 bg-[#8c063b] text-white rounded-[20px] shadow-md hover:bg-[#8c063b] w-full"
-                  >
-                    Go to Cart
-                  </button>
-                </div>
               </div>
             </div>
           ))}

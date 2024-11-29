@@ -11,6 +11,7 @@ function ProductGallery() {
   const [likedProducts, setLikedProducts] = useState([]); // To track liked products
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
+  const token = localStorage.getItem("authToken"); // Assume token is stored in localStorage
 
   // Fetch products from the backend API
   async function getAllProducts() {
@@ -35,12 +36,12 @@ function ProductGallery() {
   }, []);
 
   // Handle Add to Cart
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     setCart((prevCart) => {
       // Check if product already exists in the cart
       const existingProductIndex = prevCart.findIndex((item) => item._id === product._id);
       if (existingProductIndex !== -1) {
-        // If exists, increase the quantity (assuming each product has a quantity property)
+        // If exists, increase the quantity
         const updatedCart = [...prevCart];
         updatedCart[existingProductIndex].quantity += 1;
         return updatedCart;
@@ -49,16 +50,75 @@ function ProductGallery() {
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
-    setCartCount(cartCount + 1); // Update the cart count
+
+    setCartCount((prevCount) => prevCount + 1); // Update the cart count
+
+    // Send the updated cart to the backend
+    try {
+      const response = await fetch("http://localhost:5000/api/v1/cart/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Pass the authentication token
+        },
+        body: JSON.stringify({ cart: cart }), // Send the updated cart data
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update cart in the backend");
+      }
+
+      // Optionally fetch the updated cart again to reflect any changes
+      await fetchCart();
+    } catch (error) {
+      console.error("Error updating cart in the backend:", error);
+    }
   };
+
+  // Handle Like Button Click
+  // const handleLikeClick = (productId) => {
+  //   setLikedProducts((prevLikes) => {
+  //     if (prevLikes.includes(productId)) {
+  //       return prevLikes.filter((id) => id !== productId); // Remove if already liked
+  //     } else {
+  //       return [...prevLikes, productId]; // Add to liked products
+  //     }
+  //   });
+  // };
 
   // Navigate to cart
   const navigateToCart = () => {
     navigate("/cart", { state: { cart } });
   };
 
+  // Navigate to favorites
+  // Handle Like button click
+  const handleLikeClick = (productId) => {
+    setLikedProducts((prevLikedProducts) => {
+      if (prevLikedProducts.includes(productId)) {
+        return prevLikedProducts.filter(id => id !== productId); // Remove from liked products
+      } else {
+        return [...prevLikedProducts, productId]; // Add to liked products
+      }
+    });
+  };
+  const navigateToFavorites = () => {
+    // Find the liked products by matching the product ids
+    const likedProductDetails = products.filter(product =>
+      likedProducts.includes(product._id)
+    );
+  
+    navigate("/favorites", { state: { likedProducts: likedProductDetails, likedProductIds: likedProducts } });
+  };
+  
+
+  
+
   return (
-    <div className="min-h-screen flex justify-center items-center relative" style={{ backgroundColor: '#ce807e' }}>
+    <div
+      className="min-h-screen flex justify-center items-center relative"
+      style={{ backgroundColor: "#ce807e" }}
+    >
       <div className="flex gap-10 text-black flex-wrap justify-center relative mt-8">
         {products.map((product) => (
           <div
@@ -107,16 +167,27 @@ function ProductGallery() {
                   </h2>
                   <h3 className="text-xl">${product.price}</h3>
                 </div>
-                <p className="text-sm text-gray-600 mt-4"><i>Category: {product.category}</i></p>
+                <p className="text-sm text-gray-600 mt-4">
+                  <i>Category: {product.category}</i>
+                </p>
                 <p className="text-start mt-4">{product.description}</p>
 
                 {/* Add to Cart Button */}
                 <button
                   className="text-white px-4 py-2 rounded-[20px] mt-2 bg-[#8c063b]"
-                  onClick={() => handleAddToCart(product)} 
+                  onClick={() => handleAddToCart(product)}
                 >
                   Add to Cart
                 </button>
+
+                   {/* Favorite Button */}
+            <button
+              className="text-white px-4 py-2 rounded-[20px] mt-2 bg-[#ce807e]"
+              onClick={navigateToFavorites}
+            >
+              Go to Favorites
+            </button>
+
               </div>
             </div>
           </div>
