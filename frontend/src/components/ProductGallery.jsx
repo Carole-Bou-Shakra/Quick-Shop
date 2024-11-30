@@ -2,7 +2,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHeart, FaRegHeart, FaShoppingCart } from "react-icons/fa"; // Import the cart icon
+import { FaHeart, FaRegHeart, FaShoppingCart } from "react-icons/fa";
 
 function ProductGallery() {
   const [products, setProducts] = useState([]);
@@ -11,7 +11,7 @@ function ProductGallery() {
   const [likedProducts, setLikedProducts] = useState([]); // To track liked products
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
-  const token = localStorage.getItem("authToken"); // Assume token is stored in localStorage
+  const token = localStorage.getItem("authenticateToken"); // Assume token is stored in localStorage
 
   // Fetch products from the backend API
   async function getAllProducts() {
@@ -35,8 +35,25 @@ function ProductGallery() {
     getAllProducts();
   }, []);
 
-  // Handle Add to Cart
+  // Ensure token validity for Add to Cart action
+  const ensureTokenValidity = () => {
+    const storedToken = localStorage.getItem("authenticateToken");
+    if (!storedToken) {
+      alert("Please log in to add items to the cart.");
+      return false;
+    }
+    return true;
+  };
+
   const handleAddToCart = async (product) => {
+    const token = localStorage.getItem("authenticateToken"); // Get the token from localStorage
+    console.log("Token retrieved:", token); // Log to check if token exists
+  
+    if (!token) {
+      console.error("No token found. User not logged in.");
+      return; // Exit if no token is available
+    }
+  
     setCart((prevCart) => {
       // Check if product already exists in the cart
       const existingProductIndex = prevCart.findIndex((item) => item._id === product._id);
@@ -50,9 +67,15 @@ function ProductGallery() {
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
-
+  
     setCartCount((prevCount) => prevCount + 1); // Update the cart count
-
+  
+    // Prepare the cart data as an object with product IDs as keys
+    const cartData = {};
+    cart.forEach(item => {
+      cartData[item._id] = item.quantity;
+    });
+  
     // Send the updated cart to the backend
     try {
       const response = await fetch("http://localhost:5000/api/v1/cart/update", {
@@ -61,58 +84,47 @@ function ProductGallery() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`, // Pass the authentication token
         },
-        body: JSON.stringify({ cart: cart }), // Send the updated cart data
+        body: JSON.stringify({ cart: cartData }), // Send the updated cart data
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to update cart in the backend");
       }
-
-      // Optionally fetch the updated cart again to reflect any changes
-      await fetchCart();
-    } catch (error) {
-      console.error("Error updating cart in the backend:", error);
-    }
+  
+   // Optionally handle further UI updates after successful update
+   console.log("Cart updated successfully");
+  } catch (error) {
+    console.error("Error updating cart in the backend:", error);
+  }
   };
-
-  // Handle Like Button Click
-  // const handleLikeClick = (productId) => {
-  //   setLikedProducts((prevLikes) => {
-  //     if (prevLikes.includes(productId)) {
-  //       return prevLikes.filter((id) => id !== productId); // Remove if already liked
-  //     } else {
-  //       return [...prevLikes, productId]; // Add to liked products
-  //     }
-  //   });
-  // };
+  
 
   // Navigate to cart
   const navigateToCart = () => {
     navigate("/cart", { state: { cart } });
   };
 
-  // Navigate to favorites
   // Handle Like button click
   const handleLikeClick = (productId) => {
     setLikedProducts((prevLikedProducts) => {
       if (prevLikedProducts.includes(productId)) {
-        return prevLikedProducts.filter(id => id !== productId); // Remove from liked products
+        return prevLikedProducts.filter((id) => id !== productId); // Remove from liked products
       } else {
         return [...prevLikedProducts, productId]; // Add to liked products
       }
     });
   };
+
+  // Navigate to favorites
   const navigateToFavorites = () => {
-    // Find the liked products by matching the product ids
-    const likedProductDetails = products.filter(product =>
+    const likedProductDetails = products.filter((product) =>
       likedProducts.includes(product._id)
     );
-  
-    navigate("/favorites", { state: { likedProducts: likedProductDetails, likedProductIds: likedProducts } });
-  };
-  
 
-  
+    navigate("/favorites", {
+      state: { likedProducts: likedProductDetails, likedProductIds: likedProducts },
+    });
+  };
 
   return (
     <div
@@ -180,14 +192,13 @@ function ProductGallery() {
                   Add to Cart
                 </button>
 
-                   {/* Favorite Button */}
-            <button
-              className="text-white px-4 py-2 rounded-[20px] mt-2 bg-[#ce807e]"
-              onClick={navigateToFavorites}
-            >
-              Go to Favorites
-            </button>
-
+                {/* Favorite Button */}
+                <button
+                  className="text-white px-4 py-2 rounded-[20px] mt-2 bg-[#ce807e]"
+                  onClick={navigateToFavorites}
+                >
+                  Go to Favorites
+                </button>
               </div>
             </div>
           </div>
@@ -196,7 +207,7 @@ function ProductGallery() {
 
       {/* Cart Icon */}
       <div
-        className="fixed bottom-4 right-4 bg-[#ce807e] rounded-full p-4 shadow-lg cursor-pointer z-50"
+        className="fixed bottom-4 right-4 bg-[#8c063b] rounded-full p-4 shadow-lg cursor-pointer z-50"
         onClick={navigateToCart}
       >
         <FaShoppingCart className="text-white text-2xl" />

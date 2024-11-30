@@ -11,47 +11,46 @@ const LoginPage = ({ handleLogin }) => {
 
   const navigate = useNavigate();
 
-  // Handle form submission and API login
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const userCredentials = {
-      email: username,  // Make sure you're using the correct username variable
-      password: password,
-    };
+ // Handle form submission and API login
+ const handleSubmit = async (e) => {
+  e.preventDefault();
   
-    // Assuming you already have the token (replace with your actual logic for getting the token)
-    const token = localStorage.getItem("authenticateToken");
-  
-    try {
-      const response = await fetch("http://localhost:5000/api/v1/user/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, // Include the token here
-        },
-        body: JSON.stringify({
-          email: userCredentials.email,  // Use userCredentials.email here
-          password: userCredentials.password,
-        }),
-      });
-  
-      const result = await response.json();
-  
-      console.log("Response from API:", result); // Debugging the response
-  
-      if (response.ok) {
-        handleLogin(); // Set logged-in state in the parent
-        navigate("/");
-        console.log("Login successful:", result);
-      } else {
-        setErrorMessage(result.message || "Login failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error during login:", error);
-      setErrorMessage("An error occurred. Please try again later.");
-    }
+  const userCredentials = {
+    email: username,  // Make sure you're using the correct username variable
+    password: password,
   };
+
+  try {
+    const response = await fetch("http://localhost:5000/api/v1/user/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: userCredentials.email,  // Use userCredentials.email here
+        password: userCredentials.password,
+      }),
+    });
+
+    const result = await response.json();
+
+    console.log("Response from API:", result); // Debugging the response
+
+    if (response.ok) {
+      localStorage.setItem("authenticateToken", result.data.token); // Save the token to localStorage
+      console.log("Stored token:", result.data.token); // Log token for debugging
+      handleLogin(); // Set logged-in state in the parent
+      navigate("/"); // Redirect to home page
+      console.log("Login successful:", result);
+    } else {
+      setErrorMessage(result.message || "Login failed. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error during login:", error);
+    setErrorMessage("An error occurred. Please try again later.");
+  }
+};
+
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-cover bg-center" style={{ backgroundImage: "url('loginimage.jpg')" }}>

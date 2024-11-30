@@ -5,7 +5,7 @@ const CartSchema = new Schema({
     products: [
         {
             product: {
-                type: Schema.Types.ObjectId,
+                type: Schema.Types.ObjectId,  // Reference to Product model
                 ref: 'Product'
             },
             quantity: {
@@ -26,6 +26,7 @@ const CartSchema = new Schema({
         updatedAt: 'updated_at',
     }
 });
+
 
 
 const Cart = mongoose.model('Cart', CartSchema);

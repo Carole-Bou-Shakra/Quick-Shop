@@ -1,46 +1,32 @@
 const jwt = require('jsonwebtoken');
-require('dotenv').config(); // Make sure this is at the top, before using process.env
-
-const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateToken = (req, res, next) => {
     try {
         const authHeader = req.get('Authorization');
         
         if (!authHeader) {
-            console.log('Authorization header missing!');
-            return res.status(400).json({
-                message: 'Authorization header missing!',
-                data: null,
-            });
+            throw new Error('Authorization header missing!');
         }
 
-        const token = authHeader.split(' ')[1];
+        // Check if the token has the 'Bearer' part
+        if (!authHeader.startsWith('Bearer ')) {
+            throw new Error('Invalid token format! It should start with "Bearer ".');
+        }
+
+        const token = authHeader.split(' ')[1];  // Extract token from the Authorization header
+
         if (!token) {
-            console.log('Token is missing or invalid!');
-            return res.status(400).json({
-                message: 'Invalid authorization token!',
-                data: null,
-            });
+            throw new Error('Token is missing after "Bearer "');
         }
 
-        // Log the token to verify it's being passed correctly
-        console.log('Received Token:', token);
+        const user = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Verify the token and decode the user
-        const user = jwt.verify(token, JWT_SECRET);  // Use JWT_SECRET directly
-
-        // Log the decoded user to verify it's correct
-        console.log('Decoded user:', user);
-
-        // Attach the user to the request object
-        req.user = user;
-        next();
+        req.user = user; // Attach user data to the request object
+        next(); // Pass control to the next middleware or route handler
     } catch (error) {
-        console.error('Authentication Error:', error.message);  // Log the exact error message
-
+        console.error(error);
         res.status(401).json({
-            errors: [error.message],  // Send the specific error message from JWT
+            errors: [error.message],
             message: 'Not authorized!',
             data: null,
         });
@@ -48,5 +34,3 @@ const authenticateToken = (req, res, next) => {
 };
 
 module.exports = authenticateToken;
-
-

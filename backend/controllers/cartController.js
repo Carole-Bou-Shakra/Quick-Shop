@@ -120,59 +120,63 @@ router.put('/update/:id', async (req, res) => {
 
 router.put('/update', authenticateToken, async (req, res) => {
     try {
-      const user_Id = req.user._id;
-      const cartItems = req.body.cart;
-  
-      console.log('User_ID:', user_Id); // Log userId
-      console.log('Cart Items:', cartItems); // Log incoming cart data
+        // @ts-ignore
+        const userId = req.user._id;
 
+        const newCart = {
+            user: userId,
+            products: []  // Initialize the products array
+        };
 
-      if (!cartItems || typeof cartItems !== 'object') {
-        return res.status(400).json({ message: 'Invalid cart format.' });
-      }
-  
-      // Find the user's cart or initialize a new one
-      let cart = await Cart.findOne({ user: user_Id });
-
-        if (!cart) {
-        cart = new Cart({ user: user_Id, items: [] }); // Ensure items is initialized as an empty array
+        // Ensure req.body.cart is valid
+        if (!req.body.cart || typeof req.body.cart !== 'object') {
+            return res.status(400).json({
+                errors: ["Invalid cart data"],
+                message: "Something went wrong!",
+                data: null
+            });
         }
 
-      // Update quantities or add new products to the cart
-      Object.entries(cartItems).forEach(([productId, quantity]) => {
-        // Check if cart.items is an array
-        if (Array.isArray(cart.items)) {
-          const existingItem = cart.items.find(item => item.product.toString() === productId);
-      
-          if (existingItem) {
-            // Update quantity if the product already exists
-            existingItem.quantity += Number(quantity);
-          } else {
-            // Add new product to the cart
-            cart.items.push({ product: productId, quantity: Number(quantity) });
-          }
-        } else {
-          console.error("cart.items is not an array");
-        }
-      });
-      
-      // Recalculate total price
-      await cart.save(); // pre('save') will handle the total price calculation
-  
-      res.status(200).json({
-        errors: null,
-        message: 'Cart updated successfully!',
-        data: cart,
-      });
+        // Loop through each product and quantity in the cart
+        Object.entries(req.body.cart).forEach(([productId, quantity]) => {
+            // Validate that quantity is a number and is greater than 0
+            if (typeof quantity !== 'number' || quantity <= 0) {
+                return res.status(400).json({
+                    errors: ["Invalid quantity data"],
+                    message: "Quantity must be a positive number!",
+                    data: null
+                });
+            }
+
+            // Push the product and quantity into the newCart array
+            newCart.products.push({
+                product: productId,  // Only product ID
+                quantity: quantity   // Valid quantity (number)
+            });
+        });
+
+        // Update the cart if it exists, or create a new one if not
+        const cart = await Cart.findOneAndUpdate(
+            { user: userId },
+            newCart,
+            { upsert: true, new: true }
+        );
+
+        // Send the updated cart back to the client
+        res.status(200).json({
+            errors: null,
+            message: "Cart updated successfully!",
+            data: cart
+        });
+
     } catch (error) {
-      console.error('Error updating cart:', error);
-      res.status(500).json({
-        errors: [error.message],
-        message: 'Something went wrong!',
-        data: null,
-      });
+        res.status(500).json({
+            errors: [error.message],
+            message: "Something went wrong!",
+            data: null
+        });
     }
-  });
+});
 
 
 router.delete('/delete/:id', async (req, res) => {

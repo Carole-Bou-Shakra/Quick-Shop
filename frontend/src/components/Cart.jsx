@@ -43,55 +43,55 @@ function Cart() {
     });
   };
 
-  const addToCart = async (newProduct) => {
-    setCart((prevCart) => {
-      const existingProductIndex = prevCart.findIndex(
-        (product) => product._id === newProduct._id
-      );
+  // const addToCart = async (newProduct) => {
+  //   setCart((prevCart) => {
+  //     const existingProductIndex = prevCart.findIndex(
+  //       (product) => product._id === newProduct._id
+  //     );
 
-      let updatedCart;
-      if (existingProductIndex !== -1) {
-        updatedCart = prevCart.map((product, index) =>
-          index === existingProductIndex
-            ? { ...product, quantity: product.quantity + 1 }
-            : product
-        );
-      } else {
-        updatedCart = [...prevCart, { ...newProduct, quantity: 1 }];
-      }
+  //     let updatedCart;
+  //     if (existingProductIndex !== -1) {
+  //       updatedCart = prevCart.map((product, index) =>
+  //         index === existingProductIndex
+  //           ? { ...product, quantity: product.quantity + 1 }
+  //           : product
+  //       );
+  //     } else {
+  //       updatedCart = [...prevCart, { ...newProduct, quantity: 1 }];
+  //     }
 
-      // Save updated cart locally
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
+  //     // Save updated cart locally
+  //     localStorage.setItem('cart', JSON.stringify(updatedCart));
 
-      // Send updated cart to the server
-      updateCartInDatabase(updatedCart);
+  //     // Send updated cart to the server
+  //     updateCartInDatabase(updatedCart);
 
-      return updatedCart;
-    });
-  };
+  //     return updatedCart;
+  //   });
+  // };
 
-  const updateCartInDatabase = async (cart) => {
-    const token = localStorage.getItem('token'); // Retrieve the token from local storage
+  // const updateCartInDatabase = async (cart) => {
+  //   const token = localStorage.getItem('token'); // Retrieve the token from local storage
   
-    try {
-      setLoading(true);
-      const response = await axios.put(
-        "http://localhost:5000/api/v1/cart/update",
-        { cart },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Include the token
-          },
-        }
-      );
-      setLoading(false);
-      console.log("Cart updated successfully:", response.data);
-    } catch (err) {
-      setLoading(false);
-      setError("Failed to update cart. Please try again.");
-      console.error(err);
-    }
-  };
+  //   try {
+  //     setLoading(true);
+  //     const response = await axios.put(
+  //       "http://localhost:5000/api/v1/cart/update",
+  //       { cart },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`, // Include the token
+  //         },
+  //       }
+  //     );
+  //     setLoading(false);
+  //     console.log("Cart updated successfully:", response.data);
+  //   } catch (err) {
+  //     setLoading(false);
+  //     setError("Failed to update cart. Please try again.");
+  //     console.error(err);
+  //   }
+  // };
   
   
   const handleRemove = (productId) => {
@@ -123,7 +123,7 @@ function Cart() {
       localStorage.setItem('cart', JSON.stringify(updatedCart));
 
       // Update the server with the new cart
-      updateCartInDatabase(updatedCart);
+      // updateCartInDatabase(updatedCart);
 
       return updatedCart;
     });

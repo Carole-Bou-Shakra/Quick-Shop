@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
@@ -108,6 +108,7 @@ const Navbar = ({ toggleFormVisibility, isFormVisible, isLoggedIn }) => {
         <button className="nav-btn px-4 py-2 bg-[#ce807e] hover:bg-[#8b0019] rounded-[20px] transition">
           Profile
         </button>
+
       </div>
     </header>
   );
