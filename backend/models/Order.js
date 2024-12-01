@@ -3,41 +3,40 @@ const { Schema } = mongoose;
 
 // Define the schema for an Order
 const OrderSchema = new Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',  // Assuming you have a User model
-        required: true
-    },
     products: [
         {
             product: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Product',  // Reference to Product model
-                required: true
+                type: Schema.Types.ObjectId,
+                ref: 'Product'
             },
             quantity: {
                 type: Number,
-                required: true
+                required: true,
+                default: 1
             },
-            total_price: {
+            priceOfOne: {
                 type: Number,
                 required: true
             }
         }
     ],
-    total_amount: {
-        type: Number,
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     },
-    order_status: {
+    status: {
         type: String,
-        enum: ['Pending', 'Shipped', 'Delivered', 'Cancelled'],
-        default: 'Pending'
+        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+        default: 'pending'
     },
-    payment_status: {
+    address: {
         type: String,
-        enum: ['Pending', 'Paid'],
-        default: 'Pending'
+        required: true,
+    },
+    totalPrice: {
+        type: Number,
+        required: true
     }
 }, {
     timestamps: {
@@ -45,6 +44,8 @@ const OrderSchema = new Schema({
         updatedAt: 'updated_at',
     }
 });
+
+
 
 // Create a model for the Order schema
 const Order = mongoose.model('Order', OrderSchema);

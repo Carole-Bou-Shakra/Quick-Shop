@@ -107,26 +107,48 @@ function ProductGallery() {
   };
 
   // Handle Like button click
-  const handleLikeClick = (productId) => {
-    setLikedProducts((prevLikedProducts) => {
-      if (prevLikedProducts.includes(productId)) {
-        return prevLikedProducts.filter((id) => id !== productId); // Remove from liked products
+  const handleLikeClick = async (productId) => {
+    if (!token) {
+      console.error("No token found. User not logged in.");
+      return;
+    }
+
+    try {
+      // Send POST request to add like
+      const response = await fetch("http://localhost:5000/api/v1/like/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setLikedProducts((prevLikedProducts) => 
+          prevLikedProducts.includes(productId)
+            ? prevLikedProducts.filter((id) => id !== productId)
+            : [...prevLikedProducts, productId]
+        );
       } else {
-        return [...prevLikedProducts, productId]; // Add to liked products
+        console.error("Failed to like product:", result.message);
       }
-    });
+    } catch (error) {
+      console.error("Error liking product:", error);
+    }
   };
 
-  // Navigate to favorites
-  const navigateToFavorites = () => {
-    const likedProductDetails = products.filter((product) =>
-      likedProducts.includes(product._id)
-    );
-
-    navigate("/favorites", {
-      state: { likedProducts: likedProductDetails, likedProductIds: likedProducts },
-    });
-  };
+    // Navigate to favorites
+    const navigateToFavorites = () => {
+      const likedProductDetails = products.filter((product) =>
+        likedProducts.includes(product._id)
+      );
+  
+      navigate("/favorites", {
+        state: { likedProducts: likedProductDetails, likedProductIds: likedProducts },
+      });
+    };
 
   return (
     <div

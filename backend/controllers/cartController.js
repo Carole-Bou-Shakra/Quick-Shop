@@ -1,5 +1,6 @@
 const express = require('express');
 const Cart = require('../models/Cart');  // Correct import
+const Order = require('../models/Order');  // Import Order model
  // Assuming the model path is correct
  const authenticateToken = require('../middleware/authenticateToken'); 
  const Product = require('../models/Product');
