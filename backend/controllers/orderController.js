@@ -1,7 +1,7 @@
 const express = require('express');
 const Order = require('../models/Order');  // Correct import
 const  Cart  = ('../models/Cart');
-
+const mongoose = require('mongoose');
 const  Product = ('../models/Product');
  // Assuming the model path is correct
 
@@ -72,53 +72,103 @@ router.get('/:id', async (req, res) => {
 });
 
 
+
 router.put('/update/:id', async (req, res) => {
     const { id } = req.params;  // Extract the order ID from the URL
-    const { user_id, product_id, quantity, status, total_price } = req.body;  // Data to update
+    const { user, productid, quantity, status, totalPrice, address, priceOfOne } = req.body;  // Extract fields from request body
+
     try {
         console.log(`Attempting to update order with ID: ${id}`); // Debugging log
+        console.log(`Request Body: ${JSON.stringify(req.body)}`); // Log the request body to see what's being passed
 
-        // Find the order by ID and update it
-        const updatedOrder = await Order.findByIdAndUpdate(
-            id, 
-            { 
-                user_id,        // User associated with the order
-                product_id,     // Product being ordered
-                quantity,       // Quantity of the product ordered
-                status,         // Status of the order (e.g., "shipped", "pending")
-                total_price     // Total price of the order
-            }, 
-            { new: true }  // Return the updated order
-        );
-
-        console.log(updatedOrder);  // Debugging log to show the updated order
-
-        // If the order is not found, return a 404 error
-        if (!updatedOrder) {
-            console.log('Order not found!'); // Debugging log
-            return res.status(404).json({
-                errors: null,
-                message: 'Order not found!',
+        // Validate required fields
+        if (!totalPrice || !address || !priceOfOne || totalPrice <= 0 || !Array.isArray(priceOfOne)) {
+            return res.status(400).json({
+                errors: ["totalPrice, address, and priceOfOne are required and must be valid"],
+                message: "Something went wrong!",
                 data: null
             });
         }
 
-        // Respond with the updated order data
+        // Ensure productid, quantity, and priceOfOne are arrays
+        const productArray = Array.isArray(productid) ? productid : [productid];
+        const quantityArray = Array.isArray(quantity) ? quantity : [quantity];
+        const priceOfOneArray = Array.isArray(priceOfOne) ? priceOfOne : [priceOfOne];
+
+        // Validate product IDs
+        const validProductIds = productArray.map(pid => {
+            if (mongoose.Types.ObjectId.isValid(pid)) {
+                return new mongoose.Types.ObjectId(pid);
+            } else {
+                console.error(`Invalid ObjectId: ${pid}`);
+                return null;
+            }
+        }).filter(Boolean); // Remove null values
+
+        if (validProductIds.length === 0) {
+            return res.status(400).json({
+                errors: ["Invalid product ID(s) provided"],
+                message: "Something went wrong!",
+                data: null
+            });
+        }
+
+        // Construct product data
+        const productsData = validProductIds.map((pid, index) => ({
+            productId: pid,
+            quantity: quantityArray[index] || 1,  // Default to 1 if not provided
+            priceOfOne: priceOfOneArray[index] || 0,  // Default to 0 if not provided
+        }));
+
+        // Attempt to update the order
+        const updatedOrder = await Order.findByIdAndUpdate(
+            id,
+            {
+                user,
+                products: productsData,
+                status,
+                totalPrice,
+                address
+            },
+            { new: true, runValidators: true }  // Return updated document with validation
+        );
+
+        if (!updatedOrder) {
+            console.log('Order not found! Creating a new order...'); // Debugging log
+            const newOrder = new Order({
+                user,
+                products: productsData,
+                status,
+                totalPrice,
+                address
+            });
+            await newOrder.save();
+
+            return res.status(200).json({
+                errors: null,
+                message: 'Order not found! A new order was created.',
+                data: newOrder
+            });
+        }
+
+        // Respond with the updated order
         res.status(200).json({
             errors: null,
             message: 'Order updated successfully!',
             data: updatedOrder
         });
     } catch (error) {
-        // Catch any errors and return a 500 response
-        console.error(error);  // Debugging log for error
+        console.error("Error updating order:", error.message, error.stack); // Debugging log for error
         res.status(500).json({
-            errors: [error],
+            errors: [error.message],
             message: 'Something went wrong!',
             data: null
         });
     }
 });
+
+
+
 
 
 
