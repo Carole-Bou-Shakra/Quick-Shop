@@ -121,7 +121,7 @@ router.put('/update/:id', async (req, res) => {
 router.put('/update', authenticateToken, async (req, res) => {
     try {
         // @ts-ignore
-        const userId = req.user._id;
+        const userId = req.user.id;
 
         const newCart = {
             user: userId,
@@ -139,6 +139,8 @@ router.put('/update', authenticateToken, async (req, res) => {
 
         // Loop through each product and quantity in the cart
         Object.entries(req.body.cart).forEach(([productId, quantity]) => {
+            console.log(`Product ID: ${productId}, Quantity: ${quantity}`); // Log the values
+        
             // Validate that quantity is a number and is greater than 0
             if (typeof quantity !== 'number' || quantity <= 0) {
                 return res.status(400).json({
@@ -147,13 +149,14 @@ router.put('/update', authenticateToken, async (req, res) => {
                     data: null
                 });
             }
-
+        
             // Push the product and quantity into the newCart array
             newCart.products.push({
                 product: productId,  // Only product ID
                 quantity: quantity   // Valid quantity (number)
             });
         });
+        
 
         // Update the cart if it exists, or create a new one if not
         const cart = await Cart.findOneAndUpdate(
@@ -177,6 +180,7 @@ router.put('/update', authenticateToken, async (req, res) => {
         });
     }
 });
+
 
 
 

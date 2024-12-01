@@ -48,33 +48,35 @@ function ProductGallery() {
   const handleAddToCart = async (product) => {
     const token = localStorage.getItem("authenticateToken"); // Get the token from localStorage
     console.log("Token retrieved:", token); // Log to check if token exists
-  
+    
     if (!token) {
       console.error("No token found. User not logged in.");
       return; // Exit if no token is available
     }
   
+    // Update the cart state
     setCart((prevCart) => {
-      // Check if product already exists in the cart
-      const existingProductIndex = prevCart.findIndex((item) => item._id === product._id);
+      const existingProductIndex = prevCart.findIndex((item) => item._id === product._id); // Use product._id instead of product.id
       if (existingProductIndex !== -1) {
-        // If exists, increase the quantity
+        // If product exists, increase quantity
         const updatedCart = [...prevCart];
         updatedCart[existingProductIndex].quantity += 1;
         return updatedCart;
       } else {
-        // If not, add the product to the cart
+        // If product doesn't exist, add new product to the cart
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
   
-    setCartCount((prevCount) => prevCount + 1); // Update the cart count
+    // Increment the cart count
+    setCartCount((prevCount) => prevCount + 1);
   
-    // Prepare the cart data as an object with product IDs as keys
-    const cartData = {};
-    cart.forEach(item => {
-      cartData[item._id] = item.quantity;
-    });
+    // Wait for the cart to update before making the backend call
+    const updatedCart = [...cart, { ...product, quantity: 1 }];
+    const cartData = updatedCart.reduce((acc, item) => {
+      acc[item._id] = item.quantity;
+      return acc;
+    }, {});
   
     // Send the updated cart to the backend
     try {
@@ -91,12 +93,12 @@ function ProductGallery() {
         throw new Error("Failed to update cart in the backend");
       }
   
-   // Optionally handle further UI updates after successful update
-   console.log("Cart updated successfully");
-  } catch (error) {
-    console.error("Error updating cart in the backend:", error);
-  }
+      console.log("Cart updated successfully");
+    } catch (error) {
+      console.error("Error updating cart in the backend:", error);
+    }
   };
+  
   
 
   // Navigate to cart

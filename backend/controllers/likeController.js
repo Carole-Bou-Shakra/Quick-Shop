@@ -10,36 +10,33 @@ router.get('/', (req, res) => {
 
 router.post('/create', authenticateToken, async (req, res) => {
     try {
-        const { productId } = req.body;
-        if (!productId) {
-            throw new Error('Missing required fields!');
-        }
-
-    
-        const userId = req.user.id;
-
-        const like = new Like({
-            user: userId,
-            product: productId
-        })
-
-        await like.save()
-
-        res.status(200).json({
-            errors: null,
-            message: "Like created!",
-            data: like
-        })
-
+      const { productId } = req.body;
+      if (!productId) {
+        throw new Error('Missing required fields!');
+      }
+  
+      const userId = req.user.id; // User ID from the token
+  
+      const like = new Like({
+        user: userId,
+        product: productId
+      });
+  
+      await like.save(); // Save the like in the database
+  
+      res.status(200).json({
+        message: 'Like created!',
+        data: like
+      });
     } catch (error) {
-        res.status(500).json({
-            errors: [error.message],
-            message: "Something went wrong!",
-            data: null
-        })
+      res.status(500).json({
+        errors: [error.message],
+        message: 'Something went wrong!',
+        data: null
+      });
     }
-})
-
+  });
+  
 router.get('/:id', async (req, res) => {
     const { id } = req.params; // Extract the Like ID from the URL
     try {

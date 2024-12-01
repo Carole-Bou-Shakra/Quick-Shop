@@ -1,28 +1,63 @@
-/* eslint-disable-next-line no-unused-vars */
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from 'axios';
+
+// Function to check if the token is valid
+const isTokenValid = (token) => {
+  if (!token) return false;
+
+  const decodedToken = JSON.parse(atob(token.split('.')[1]));
+  const currentTime = Math.floor(Date.now() / 1000);
+
+  return decodedToken.exp > currentTime;
+};
 
 function Favorites() {
   const { state } = useLocation(); // Get the state passed from ProductGallery
   const { likedProducts, likedProductIds } = state;
 
   const [likedProductsState, setLikedProductsState] = useState(likedProductIds);
-  // eslint-disable-next-line no-unused-vars
   const [favorites, setFavorites] = useState([]);
 
-  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate(); // Hook to navigate to Cart page
 
-  // Toggle like status for the heart
-  const handleLikeClick = (productId) => {
-    setLikedProductsState((prevLikedProducts) => {
-      const updatedLikedProducts = prevLikedProducts.includes(productId)
-        ? prevLikedProducts.filter(id => id !== productId)
-        : [...prevLikedProducts, productId];
+  // Function to handle the like click and redirect to login if not logged in
+  const handleLikeClick = async (productId) => {
+    const token = localStorage.getItem('token'); // Get token from localStorage
+    const isLoggedIn = isTokenValid(token); // Check if the token is valid
 
-      return updatedLikedProducts;
-    });
+    if (!isLoggedIn) {
+      alert('You must be logged in to like a product.');
+      navigate('/login'); // Redirect to login page
+      return;
+    }
+
+    const userId = localStorage.getItem('userId'); // Get userId from localStorage
+
+    try {
+      // Send like to the backend with userId, productId, and token
+      const response = await axios.post('http://localhost:5000/api/v1/like/create', {
+        productId,
+        token,
+        userId
+      });
+
+      console.log('Like created:', response.data);
+
+      // Update likedProductsState to reflect the like
+      setLikedProductsState((prevLikedProducts) => {
+        const updatedLikedProducts = prevLikedProducts.includes(productId)
+          ? prevLikedProducts.filter(id => id !== productId)
+          : [...prevLikedProducts, productId];
+
+        return updatedLikedProducts;
+      });
+    } catch (error) {
+      console.error('Error creating like:', error);
+      alert('Something went wrong while liking the product.');
+    }
   };
 
   // Update the favorites list with liked products
@@ -33,17 +68,14 @@ function Favorites() {
   return (
     <div
       className="min-h-screen flex justify-center items-center relative"
-      style={{
-        backgroundColor: '#ce807e', // Solid background color
-      }}
+      style={{ backgroundColor: '#ce807e' }}
     >
       <div className="flex gap-10 text-black flex-wrap justify-center mt-8 z-10">
         {likedProducts
-          .filter(product => likedProductsState.includes(product._id)) // Only show liked products
+          .filter(product => likedProductsState.includes(product._id))
           .map((product) => (
             <div key={product._id} className="bg-gray-200 rounded-[20px] overflow-hidden w-[250px] h-[500px] flex flex-col">
               <div className="card-top h-[50%] relative">
-                {/* Image and Like button */}
                 <div className="relative w-full h-full">
                   <img
                     className="absolute object-cover w-full h-full"
