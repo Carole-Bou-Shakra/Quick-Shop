@@ -16,7 +16,7 @@ router.post('/create', authenticateToken, async (req, res) => {
         }
 
     
-        const userId = req.user._id;
+        const userId = req.user.id;
 
         const like = new Like({
             user: userId,

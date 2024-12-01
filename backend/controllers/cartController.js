@@ -179,6 +179,14 @@ router.put('/update', authenticateToken, async (req, res) => {
 });
 
 
+
+
+
+
+
+
+
+
 router.delete('/delete/:id', async (req, res) => {
     const { id } = req.params;  // Extract the cart ID from the URL
     try {
@@ -208,6 +216,54 @@ router.delete('/delete/:id', async (req, res) => {
         });
     }
 });
+
+
+router.delete('/delete/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const userId = req.user.id; // Replace with your user identification logic
+  
+    try {
+      // Find the user's cart
+      const cart = await Cart.findOne({ user: userId });
+  
+      if (!cart) {
+        return res.status(404).json({
+          errors: null,
+          message: 'Cart not found!',
+          data: null,
+        });
+      }
+  
+      // Remove the product from the cart
+      const initialProductCount = cart.products.length;
+      cart.products = cart.products.filter(
+        (product) => product._id.toString() !== productId
+      );
+  
+      if (initialProductCount === cart.products.length) {
+        return res.status(404).json({
+          errors: null,
+          message: 'Product not found in the cart!',
+          data: null,
+        });
+      }
+  
+      await cart.save();
+  
+      res.status(200).json({
+        errors: null,
+        message: 'Product removed successfully!',
+        data: cart,
+      });
+    } catch (error) {
+      res.status(500).json({
+        errors: [error.message],
+        message: 'Something went wrong while removing the product!',
+        data: null,
+      });
+    }
+  });
+  
 
 
 // router.put('/update', authenticateToken, async (req, res) => {

@@ -94,21 +94,33 @@ function Cart() {
   // };
   
   
-  const handleRemove = (productId) => {
-    setCart((prevCart) =>
-      prevCart
-        .map((product) => {
-          if (product._id === productId) {
-            if (product.quantity > 1) {
-              return { ...product, quantity: product.quantity - 1 };
-            }
-            return null;
-          }
-          return product;
-        })
-        .filter((product) => product !== null)
-    );
+  const handleRemove = async (productId) => {
+    const token = localStorage.getItem('token'); // Retrieve the token from local storage
+  
+    try {
+      setLoading(true); // Show loading indicator
+  
+      // Send DELETE request to backend
+      await axios.delete(
+        `http://localhost:5000/api/v1/cart/delete/${productId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token
+          },
+        }
+      );
+  
+      // Update the cart state on successful deletion
+      setCart((prevCart) => prevCart.filter((product) => product._id !== productId));
+      setLoading(false); // Hide loading indicator
+    } catch (err) {
+      setLoading(false); // Hide loading indicator
+      setError("Failed to remove product. Please try again.");
+      console.error(err);
+    }
   };
+  
+  
 
   const handleQuantityChange = (productId, change) => {
     setCart((prevCart) => {

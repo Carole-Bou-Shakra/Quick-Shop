@@ -179,6 +179,53 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+
+router.get('/api/products', async (req, res) => {
+    try {
+      const { category, minPrice, maxPrice, name } = req.query; // Get filter parameters from query string
+  
+      // Build the filter object
+      let filter = {};
+  
+      // Check for category filter
+      if (category) {
+        filter.category = category;
+      }
+  
+      // Check for price range filter
+      if (minPrice || maxPrice) {
+        filter.price = {};
+        if (minPrice) filter.price.$gte = parseFloat(minPrice);
+        if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+      }
+  
+      // Check for name filter
+      if (name) {
+        filter.name = { $regex: name, $options: 'i' }; // Case-insensitive search for the name
+      }
+  
+      // Fetch products based on the filter
+      const products = await Product.find(filter);
+  
+      // Send the filtered products as a response
+      res.json({
+        message: 'Products fetched successfully!',
+        data: products
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: 'Error fetching products',
+        error: error.message
+      });
+    }
+  });
+  
+
+
+
+
+
 router.get('/product/search', async (req, res) => {
     const { searchTerm = '', page = 1, pageSize = 3 } = req.query;  // Extract searchTerm, page, and pageSize
     const pageInt = parseInt(page) || 1;
