@@ -59,6 +59,17 @@ const Navbar = ({ toggleFormVisibility, isFormVisible, isLoggedIn }) => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, selectedCategory, minPrice, maxPrice]);
 
+  // Handle form visibility toggle and navigation
+  const handleStoreClick = () => {
+    toggleFormVisibility();
+    navigate("/product-form");
+  };
+
+  // Navigate to the cart page
+  const handleCartClick = () => {
+    navigate("/cart");
+  };
+
   return (
     <header className="navbar flex flex-col sm:flex-row items-center justify-between bg-[#921b3e] text-white p-4 shadow-md">
       <div className="logo text-2xl font-bold mb-4 sm:mb-0">QuickShop</div>
@@ -103,41 +114,42 @@ const Navbar = ({ toggleFormVisibility, isFormVisible, isLoggedIn }) => {
         </div>
 
         {loading && <div className="loading-indicator">Loading...</div>}
+        
 
         {/* Suggestions Dropdown */}
         {(searchTerm || selectedCategory || minPrice || maxPrice) && suggestions.length > 0 ? (
-  <div className="suggestions absolute top-full left-0 mt-2 w-full bg-white shadow-lg border border-gray-300 rounded-lg z-10">
-    {suggestions.map((product) => (
-      <div
-        key={product._id}
-        className="suggestion-item text-black flex items-center gap-4 p-2 border-b border-gray-300 hover:bg-gray-100 cursor-pointer"
-      >
-        <img
-          src={
-            product.imageUrl ||
-            `http://localhost:5000/${
-              product.pictures?.[0] || "default-image.jpg"
-            }`
-          }
-          alt={product.name}
-          className="w-12 h-12 object-cover rounded-full"
-        />
-        <div className="suggestion-details flex flex-col">
-          <span className="product-name font-semibold">{product.name}</span>
-          <span className="product-description text-sm text-gray-600">
-            {product.description}
-          </span>
-        </div>
-      </div>
-    ))}
-  </div>
-       ) : (searchTerm || selectedCategory || minPrice || maxPrice) &&
-       !loading &&
-       !suggestions.length ? (
-       <div className="absolute top-full left-0 mt-2 w-full bg-white shadow-lg border border-gray-300 rounded-lg z-10">
-         <p className="text-black p-2">No suggestions found</p>
-       </div>
-     ) : null}
+          <div className="suggestions absolute top-full left-0 mt-2 w-full bg-white shadow-lg border border-gray-300 rounded-lg z-10">
+            {suggestions.map((product) => (
+              <div
+                key={product._id}
+                className="suggestion-item text-black flex items-center gap-4 p-2 border-b border-gray-300 hover:bg-gray-100 cursor-pointer"
+              >
+                <img
+                  src={
+                    product.imageUrl ||
+                    `http://localhost:5000/${
+                      product.pictures?.[0] || "default-image.jpg"
+                    }`
+                  }
+                  alt={product.name}
+                  className="w-12 h-12 object-cover rounded-full"
+                />
+                <div className="suggestion-details flex flex-col">
+                  <span className="product-name font-semibold">{product.name}</span>
+                  <span className="product-description text-sm text-gray-600">
+                    {product.description}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (searchTerm || selectedCategory || minPrice || maxPrice) &&
+          !loading &&
+          !suggestions.length ? (
+          <div className="absolute top-full left-0 mt-2 w-full bg-white shadow-lg border border-gray-300 rounded-lg z-10">
+            <p className="text-black p-2">No suggestions found</p>
+          </div>
+        ) : null}
       </div>
 
       <div className="nav-buttons flex flex-col sm:flex-row items-center gap-4">
@@ -147,14 +159,28 @@ const Navbar = ({ toggleFormVisibility, isFormVisible, isLoggedIn }) => {
         >
           Home
         </button>
-        {!isLoggedIn && (
+        {/* {!isLoggedIn && (
           <button
             className="nav-btn px-4 py-2 bg-[#ce807e] hover:bg-[#8b0019] rounded-[20px] transition"
             onClick={toggleFormVisibility}
           >
             {isFormVisible ? "Hide Store Form" : "Show Store Form"}
           </button>
+        )} */}
+        {!isLoggedIn && (
+          <button
+            className="nav-btn px-4 py-2 bg-[#ce807e] hover:bg-[#8b0019] rounded-[20px] transition"
+            onClick={handleStoreClick}
+          >
+            Add Product
+          </button>
         )}
+        {/* <button
+          className="nav-btn px-4 py-2 bg-[#ce807e] hover:bg-[#8b0019] rounded-[20px] transition"
+          onClick={handleCartClick}
+        >
+          Cart
+        </button> */}
         <button className="nav-btn px-4 py-2 bg-[#ce807e] hover:bg-[#8b0019] rounded-[20px] transition">
           Profile
         </button>

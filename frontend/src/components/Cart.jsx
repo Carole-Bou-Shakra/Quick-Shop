@@ -95,30 +95,47 @@ function Cart() {
   
   
   const handleRemove = async (productId) => {
-    const token = localStorage.getItem('token'); // Retrieve the token from local storage
-  
+    const userId = "673b60d9545219e632573095"; // Replace this with the actual user ID
+    
     try {
       setLoading(true); // Show loading indicator
   
-      // Send DELETE request to backend
+      // Check if the productId corresponds to the cart ID for deleting the entire cart
+      if (productId === "67495ca4fe52ff3ee120c711") {
+        // Send DELETE request to delete the entire cart
+        await axios.delete(
+          `http://localhost:5000/api/v1/cart/delete/${productId}`,
+          {
+            data: { user: userId }, // Pass the user ID in the body
+          }
+        );
+  
+        // Clear the cart state and remove it from local storage
+        setCart([]);
+        localStorage.removeItem('cart');
+        setLoading(false); // Hide loading indicator
+        return; // Exit the function
+      }
+  
+      // Otherwise, delete a specific product from the cart
       await axios.delete(
         `http://localhost:5000/api/v1/cart/delete/${productId}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`, // Include the token
-          },
+          data: { user: userId }, // Pass the user ID in the body
         }
       );
   
-      // Update the cart state on successful deletion
+      // Update the cart state on successful deletion of the product
       setCart((prevCart) => prevCart.filter((product) => product._id !== productId));
+      localStorage.setItem('cart', JSON.stringify(cart));
       setLoading(false); // Hide loading indicator
     } catch (err) {
       setLoading(false); // Hide loading indicator
-      setError("Failed to remove product. Please try again.");
+      setError("Failed to remove product or cart. Please try again.");
       console.error(err);
     }
   };
+  
   
   
 
@@ -151,31 +168,58 @@ function Cart() {
           <p>Your cart is empty.</p>
         ) : (
           <div>
-            {cart.map((product) => (
-              <div key={product._id} className="flex items-center justify-between mb-4 p-4 border-b">
-                <img src={`http://localhost:5000/${product.pictures[0]}`} alt={product.name} className="w-24 h-24 object-cover mr-4" />
-                <div className="flex-1">
-                  <h3 className="font-bold text-xl">{product.name}</h3>
-                  <p>{product.description}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg">${product.price}</p>
-                  <div className="flex items-center">
-                    <button onClick={() => handleQuantityChange(product._id, -1)} className="bg-gray-500 text-white px-2 py-1 rounded-full mt-2 hover:bg-gray-600">-</button>
-                    <span className="mx-2">{product.quantity || 1}</span>
-                    <button onClick={() => handleQuantityChange(product._id, 1)} className="bg-gray-500 text-white px-2 py-1 rounded-full mt-2 hover:bg-gray-600">+</button>
-                  </div>
-                  <button onClick={() => handleRemove(product._id)} className="bg-red-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-red-600">Remove</button>
-                </div>
-              </div>
-            ))}
-            <button
-              onClick={handleOrder}
-              className="bg-[#d6b474] text-white px-4 py-2 rounded-full mt-4 hover:bg-[#bdac94]"
-            >
-              Proceed to Order
-            </button>
-          </div>
+  {cart.map((product) => (
+    <div
+      key={product._id}
+      className="flex items-center justify-between mb-4 p-4 border-b"
+    >
+      <img
+        src={`http://localhost:5000/${product.pictures[0]}`}
+        alt={product.name}
+        className="w-24 h-24 object-cover mr-4"
+      />
+      <div className="flex-1">
+        <h3 className="font-bold text-xl">{product.name}</h3>
+        <p>{product.description}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-lg">${product.price}</p>
+        <div className="flex items-center">
+          <button
+            onClick={() => handleQuantityChange(product._id, -1)}
+            className="bg-gray-500 text-white px-2 py-1 rounded-full mt-2 hover:bg-gray-600"
+          >
+            -
+          </button>
+          <span className="mx-2">{product.quantity || 1}</span>
+          <button
+            onClick={() => handleQuantityChange(product._id, 1)}
+            className="bg-gray-500 text-white px-2 py-1 rounded-full mt-2 hover:bg-gray-600"
+          >
+            +
+          </button>
+        </div>
+       
+      </div>
+    </div>
+  ))}
+  <button
+    onClick={() => {
+      setCart([]); // Clear the cart state
+      localStorage.removeItem("cart"); // Remove cart data from localStorage
+    }}
+    className="bg-red-500 text-white px-4 py-2 rounded-full mt-4 hover:bg-red-600"
+  >
+    Clear Cart
+  </button>
+  <button
+    onClick={handleOrder}
+    className="bg-[#d6b474] text-white px-4 py-2 rounded-full mt-4 hover:bg-[#bdac94]"
+  >
+    Proceed to Order
+  </button>
+</div>
+
         )}
       </div>
     </div>

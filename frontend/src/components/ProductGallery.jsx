@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -46,67 +46,55 @@ function ProductGallery() {
   };
 
   const handleAddToCart = async (product) => {
-    const token = localStorage.getItem("authenticateToken"); // Get the token from localStorage
-    console.log("Token retrieved:", token); // Log to check if token exists
-    
+    const token = localStorage.getItem("authenticateToken");
     if (!token) {
       console.error("No token found. User not logged in.");
       return; // Exit if no token is available
     }
-  
-    // Update the cart state
+
     setCart((prevCart) => {
-      const existingProductIndex = prevCart.findIndex((item) => item._id === product._id); // Use product._id instead of product.id
+      const existingProductIndex = prevCart.findIndex((item) => item._id === product._id);
       if (existingProductIndex !== -1) {
-        // If product exists, increase quantity
         const updatedCart = [...prevCart];
         updatedCart[existingProductIndex].quantity += 1;
         return updatedCart;
       } else {
-        // If product doesn't exist, add new product to the cart
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
-  
-    // Increment the cart count
+
     setCartCount((prevCount) => prevCount + 1);
-  
-    // Wait for the cart to update before making the backend call
+
     const updatedCart = [...cart, { ...product, quantity: 1 }];
     const cartData = updatedCart.reduce((acc, item) => {
       acc[item._id] = item.quantity;
       return acc;
     }, {});
-  
-    // Send the updated cart to the backend
+
     try {
       const response = await fetch("http://localhost:5000/api/v1/cart/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Pass the authentication token
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ cart: cartData }), // Send the updated cart data
+        body: JSON.stringify({ cart: cartData }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to update cart in the backend");
       }
-  
+
       console.log("Cart updated successfully");
     } catch (error) {
       console.error("Error updating cart in the backend:", error);
     }
   };
-  
-  
 
-  // Navigate to cart
   const navigateToCart = () => {
     navigate("/cart", { state: { cart } });
   };
 
-  // Handle Like button click
   const handleLikeClick = async (productId) => {
     if (!token) {
       console.error("No token found. User not logged in.");
@@ -114,7 +102,6 @@ function ProductGallery() {
     }
 
     try {
-      // Send POST request to add like
       const response = await fetch("http://localhost:5000/api/v1/like/create", {
         method: "POST",
         headers: {
@@ -126,7 +113,7 @@ function ProductGallery() {
 
       const result = await response.json();
       if (response.ok) {
-        setLikedProducts((prevLikedProducts) => 
+        setLikedProducts((prevLikedProducts) =>
           prevLikedProducts.includes(productId)
             ? prevLikedProducts.filter((id) => id !== productId)
             : [...prevLikedProducts, productId]
@@ -139,16 +126,35 @@ function ProductGallery() {
     }
   };
 
-    // Navigate to favorites
-    const navigateToFavorites = () => {
-      const likedProductDetails = products.filter((product) =>
-        likedProducts.includes(product._id)
-      );
-  
-      navigate("/favorites", {
-        state: { likedProducts: likedProductDetails, likedProductIds: likedProducts },
-      });
-    };
+  const navigateToFavorites = () => {
+    const likedProductDetails = products.filter((product) =>
+      likedProducts.includes(product._id)
+    );
+
+    navigate("/favorites", {
+      state: { likedProducts: likedProductDetails, likedProductIds: likedProducts },
+    });
+  };
+
+  // Navigate to the previous image
+  const showPrevImage = (productId) => {
+    setCurrentImageIndices((prevIndices) => {
+      const currentIndex = prevIndices[productId];
+      const newIndex =
+        currentIndex === 0 ? products.find((p) => p._id === productId).pictures.length - 1 : currentIndex - 1;
+      return { ...prevIndices, [productId]: newIndex };
+    });
+  };
+
+  // Navigate to the next image
+  const showNextImage = (productId) => {
+    setCurrentImageIndices((prevIndices) => {
+      const currentIndex = prevIndices[productId];
+      const newIndex =
+        currentIndex === products.find((p) => p._id === productId).pictures.length - 1 ? 0 : currentIndex + 1;
+      return { ...prevIndices, [productId]: newIndex };
+    });
+  };
 
   return (
     <div
@@ -161,13 +167,12 @@ function ProductGallery() {
             key={product._id}
             className="bg-gray-200 rounded-[20px] overflow-hidden w-[250px] h-[500px] transition-all duration-500 ease-in-out hover:bg-gray-300 hover:shadow-lg flex flex-col"
           >
-            {/* Card Top Section */}
             <div className="card-top relative flex-1">
               <div className="relative w-full h-full ">
                 <img
                   className="absolute object-cover w-full h-full transition-opacity duration-500"
                   src={`http://localhost:5000/${product.pictures[currentImageIndices[product._id]]}`}
-                  alt={`Product image`}
+                  alt="Product image"
                 />
                 <button
                   onClick={() => showPrevImage(product._id)}
@@ -194,7 +199,6 @@ function ProductGallery() {
               </div>
             </div>
 
-            {/* Card Bottom Section */}
             <div className="card-bottom p-2 flex-1">
               <div className="flex flex-col justify-between h-[80%]">
                 <div className="flex justify-between">
@@ -206,6 +210,7 @@ function ProductGallery() {
                 <p className="text-sm text-gray-600 mt-4">
                   <i>Category: {product.category}</i>
                 </p>
+
                 <p className="text-start mt-4">{product.description}</p>
 
                 {/* Add to Cart Button */}

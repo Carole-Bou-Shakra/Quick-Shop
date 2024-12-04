@@ -225,21 +225,22 @@ router.delete('/delete/:id', async (req, res) => {
 
 router.delete('/delete/:productId', async (req, res) => {
     const { productId } = req.params;
-    const userId = req.user.id; // Replace with your user identification logic
+    const userId = req.body.user; // Assume user ID is sent in the request body
+  
+    console.log('Incoming Request:', { userId, productId });
   
     try {
-      // Find the user's cart
       const cart = await Cart.findOne({ user: userId });
+      console.log('Cart Found:', cart);
   
       if (!cart) {
         return res.status(404).json({
           errors: null,
-          message: 'Cart not found!',
+          message: 'Cart not found for the user!',
           data: null,
         });
       }
   
-      // Remove the product from the cart
       const initialProductCount = cart.products.length;
       cart.products = cart.products.filter(
         (product) => product._id.toString() !== productId
@@ -261,13 +262,15 @@ router.delete('/delete/:productId', async (req, res) => {
         data: cart,
       });
     } catch (error) {
+      console.error('Error:', error.message);
       res.status(500).json({
         errors: [error.message],
-        message: 'Something went wrong while removing the product!',
+        message: 'Failed to remove product or cart. Please try again.',
         data: null,
       });
     }
   });
+  
   
 
 
